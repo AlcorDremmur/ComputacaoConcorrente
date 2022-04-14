@@ -1,0 +1,67 @@
+#include<stdio.h>
+#include<pthread.h>
+#include <stdlib.h>
+
+#define NTHREADS 2
+#define NVETOR 10000
+
+int vetor[NVETOR];
+int vetor_pos = 0;
+
+//Function that the new thread will run
+void * tarefa(void * arg){
+	int ident = * (int *) arg;
+	int aux;
+	
+	while(vetor_pos<NVETOR){
+		printf("Thread %d: ", ident);
+		aux = vetor[vetor_pos];
+		vetor[vetor_pos] = (aux*aux);
+		printf("[%d] = %d\n", vetor_pos+1, vetor[vetor_pos]);
+		vetor_pos = vetor_pos + 1;
+	}
+	
+	pthread_exit(NULL);
+}
+
+int main(void){
+	pthread_t tid[NTHREADS];	//id of the new thread on the system
+	int ident [NTHREADS];		//local id of the new thread
+
+	printf("----------------\n");
+	printf("Vetor\n");
+	printf("----------------\n");
+	for(int i=0; i<NVETOR; i++){
+		vetor[i] = rand() % 50;
+		printf("[%d] = %d", i+1, vetor[i]);
+		printf("\n");
+	}
+	printf("----------------\n");
+	
+	//standart function to create a new thread
+	for(int i=0; i<NTHREADS; i++){
+		ident[i] = i+1;
+		if(pthread_create(&tid[i], NULL, tarefa, (void *)&ident[i])){
+			printf("ERROR - Thread Creation\n");
+		}
+	}
+	//Wait for all the new thread to reach an end to continue to main thread
+	for(int i=0; i<NTHREADS; i++){
+		if(pthread_join(tid[i], NULL)){
+			printf("ERROR - Thread Ending\n");
+		}
+	}
+	
+	//Main thread code
+	printf("----------------\n");
+	printf("Main Thread\n");
+	for(int i=0; i<NVETOR; i++){
+		printf("[%d] = %d\n", i+1, vetor[i]);
+	}
+	printf("----------------\n");
+
+	//Unbind the end of the main thread and the end of the new thread
+	pthread_exit(NULL);
+	
+	return 0;
+}
