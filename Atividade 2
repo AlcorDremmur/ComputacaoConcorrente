@@ -1,0 +1,209 @@
+//Multiplicacao Matriz X Vetor
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include "timer.h"
+
+float *mat1;	//matriz 1
+float *mat2;	//matriz 2
+float *mat3;	//matriz 3
+int nthreads;	//numero de trheads
+
+typedef struct{
+	int id;		//id do elemento que a thread ira processar
+	int dim;	//dimensoes das estruturas de entrada
+} tArgs;
+
+//funcao que as threads executarao
+void * tarefa(void *arg) {
+	tArgs *args = (tArgs*) arg;	//args recebe a estrutura parametro arg
+	
+	//printf("Thread: %d\n", (args->id)+1);
+	for(int i=(args->id); i<(args->dim); i+=nthreads){
+		for(int j=0; j<(args->dim); j++) {
+			//printf("v3[%d]:\n", (i*(args->dim)+j)+1);
+			for(int k=0; k<(args->dim); k++){
+				//printf("[%1.f] * ", mat1[i*(args->dim)+k]);
+				//printf("[%1.f] = ", mat2[k*(args->dim)+j]);
+				//printf("%1.f\n", mat1[i*(args->dim)+k] * mat2[k*(args->dim)+j]);
+				mat3[i*(args->dim)+j] += mat1[i*(args->dim)+k] * mat2[k*(args->dim)+j];
+			}
+			//printf("v3[%d] = ", (i*(args->dim)+j)+1);
+			//printf("%1.f\n", mat3[i*(args->dim)+j]);
+		}
+	}
+	pthread_exit(NULL);
+}
+
+int main(int argc, char* argv[]){
+	int dim, r, n=1;						//dimensoes da matriz
+	pthread_t *tid;							//identificadores das threads no sistema
+	tArgs *args;							//identificadores locais das threads e dimensoes
+	double inicio, fim, delta;				//variaveis de tomada de tempo
+	double delta_seq, delta_conc, t_desempenho;
+	
+	GET_TIME(inicio);				//tempo - inicio
+	
+	//leitura e avalização dos parametros de entrada	
+	printf("Digite a dimensao da matriz\n");
+	scanf("%d", &dim);
+	printf("Digite o numero de threads\n");
+	scanf("%d", &nthreads);
+	printf("=========================================================\n");
+	
+	//alocacao da memoria para as estruturas de dados
+	mat1 = (float *) malloc(sizeof(float)*dim*dim);		//alocacao dinamica da matriz
+	if(mat1==NULL) {
+		printf("ERRO 1 - malloc\n");
+		return 2;
+	}
+	
+	mat2 = (float *) malloc(sizeof(float)*dim*dim);		//alocacao dinamica da matriz
+	if(mat2==NULL) {
+		printf("ERRO 1 - malloc\n");
+		return 2;
+	}
+	
+	mat3 = (float *) malloc(sizeof(float)*dim*dim);		//alocacao dinamica da matriz
+	if(mat3==NULL) {
+		printf("ERRO 1 - malloc\n");
+		return 2;
+	}
+
+	//inicializacao das estruturas de dados (mat, vet, saida)
+	srand(time(NULL)); 				//Initialization, should only be called once.
+	for(int i=0; i<dim; i++) {
+      for(int j=0; j<dim; j++){
+      	r = rand() % 10 + 1;		//numero randomico de 1-10
+      	mat1[i*dim+j] = r;    		//equivalente mat[i][j]
+      	
+      	r = rand() % 10 + 1;
+      	mat2[i*dim+j] = r;
+      	
+      	mat3[i*dim+j] = 0;
+	  }
+   }
+	
+	GET_TIME(fim);				//tempo - fim
+	delta = fim - inicio;
+	printf("Tempo (inicializacao) : %lf\n", delta);
+	
+	//exibição dos resultados
+	printf("=========================================================\n");
+	puts("Matriz 1");
+	for(int i=0; i<dim; i++){
+		for(int j=0; j<dim; j++){
+			printf("%1.f ", mat1[i*dim+j]);
+		}
+		puts("");
+	}
+	printf("---------------------------------------------------------\n");
+	
+	puts("Matriz 2");
+	for(int i=0; i<dim; i++){
+		for(int j=0; j<dim; j++){
+			printf("%1.f ", mat2[i*dim+j]);
+		}
+		puts("");
+	}
+	
+
+
+	GET_TIME(inicio);			//tempo - inicio
+
+	//multiplicação da matriz pelo vetor
+	/*Sequencial*/
+	for(int i=0; i<dim; i++){
+		for(int j=0; j<dim; j++) {
+			//printf("v3[%d]:\n", (i*(args->dim)+j)+1);
+			for(int k=0; k<dim; k++){
+				//printf("[%1.f] * ", mat1[i*(args->dim)+k]);
+				//printf("[%1.f] = ", mat2[k*(args->dim)+j]);
+				//printf("%1.f\n", mat1[i*(args->dim)+k] * mat2[k*(args->dim)+j]);
+				mat3[i*dim+j] += mat1[i*dim+k] * mat2[k*dim+j];
+			}
+			//printf("v3[%d] = ", (i*(args->dim)+j)+1);
+			//printf("%1.f\n", mat3[i*(args->dim)+j]);
+		}
+	}
+	
+	printf("=========================================================\n");
+	GET_TIME(fim);				//tempo - fim
+	delta_seq = fim - inicio;
+	printf("Tempo (multiplicacao - sequencial) : %lf\n", delta_seq);
+
+	//reinicializa m3
+	for(int i=0; i<dim; i++) {
+      	for(int j=0; j<dim; j++){	
+      		mat3[i*dim+j] = 0;
+		}	
+   	}
+   
+	//multiplicação da matriz pelo vetor
+	/*Concorrente*/
+	
+	GET_TIME(inicio);			//tempo - inicio
+	
+	//alocacao das estruturas
+	tid = (pthread_t*) malloc(sizeof(pthread_t)*dim);
+	if(tid == NULL){
+		printf("ERRO 4 - malloc\n");
+		return 2;
+	}
+	args = (tArgs*) malloc(sizeof(tArgs)*dim);
+	if(args == NULL){
+		printf("ERRO 5 - malloc\n");
+		return 2;
+	}
+		
+	//criacao das threads
+	for(int i=0; i<nthreads; i++) {
+		(args+i)->id = i;
+		(args+i)->dim = dim;
+		if(pthread_create(tid+i, NULL, tarefa, (void*) (args+i))){
+			puts("ERRO 6 -- pthread_create"); return 3;
+		}
+   	} 
+	
+	//espera todas as threads terminarem
+	for(int i=0; i<nthreads; i++) {
+      pthread_join(*(tid+i), NULL);
+  	}
+	
+	GET_TIME(fim);				//tempo - fim
+	delta_conc = fim - inicio;
+	printf("---------------------------------------------------------\n");
+	printf("Tempo (multiplicacao - concorrente) : %lf\n", delta_conc);
+	
+	free(args);
+	free(tid);
+
+	
+	//Resultado Final
+	printf("=========================================================\n");
+	puts("Matriz 3 (Final)");
+	for(int i=0; i<dim; i++){
+		for(int j=0; j<dim; j++){
+			printf("%1.f ", mat3[i*dim+j]);
+		}
+		puts("");
+	}
+	
+	GET_TIME(inicio);				//tempo - inicio
+	
+	//liberação da memoria
+	free(mat1);
+	free(mat2);
+	free(mat3);
+   	
+   	printf("=========================================================\n");
+   	GET_TIME(fim);		//tempo - fim
+	delta = fim - inicio;
+	printf("Tempo (finalizacao) : %lf\n", delta);
+	printf("---------------------------------------------------------\n");
+	t_desempenho = delta_seq/delta_conc;
+	printf("Tempo (concorrente/sequencial) : %lf\n", t_desempenho);
+	printf("=========================================================\n");
+	
+	return 0;
+}
