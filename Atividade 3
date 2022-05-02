@@ -1,0 +1,121 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include "timer.h"
+
+long int dim;		//dimensao do vetor de entrada
+int nthreads;		//numero de threads
+float *vetor;			//vetor de entrada (dimensao dim)
+
+//fluxo das threads
+//dividimos o vetor em blocos, onde cada bloco e tratado por ma thread
+void * tarefa(void *arg){
+ 	//long int id = (long int) arg;			//identificador da thread
+ 	long int id = *((long int*) (&arg));	//identificador da thread
+ 	float *MaiorLocal;						//maior elemento do bloco do vetor
+ 	long int TamBloco = dim/nthreads;		//tamanho do bloco atribuido a cada thread
+ 	long int ini = id * TamBloco;			//id do elemento inicial de cada bloco da thread
+ 	long int fim;							//id do elemento final do bloco da thread (nao processado)
+ 	
+ 	MaiorLocal = (float*) malloc(sizeof(float));
+ 	if(MaiorLocal == NULL){
+ 		printf("Erro - malloc");
+ 		exit(1);
+	}
+	*MaiorLocal = 0;
+ 	
+	if(id == nthreads-1){					//caso seja a ultima thread
+		fim = dim;								//ultimo elemento do vetor
+	}
+	else{									//caso nao seja
+		fim = ini + TamBloco;					//trata o resto, se hover
+	}
+ 	
+ 	//sverifica o maior dos elementos do bloco atribuido a thread
+ 	for(int i=ini; i<fim; i++){
+ 		if(vetor[i] > *MaiorLocal) *MaiorLocal = vetor[i];
+	}
+ 	
+ 	//retorna o maior elemento local
+ 	pthread_exit((void *) MaiorLocal);
+ }
+
+int main(int argc, char *argv[]){
+	float MaiorSeq = 0;		//maior elemento (sequencial)
+	float MaiorConc = 0;	//maior elemento (concorrente)
+	double inicio, fim, t_seq, t_conc;
+	pthread_t *tid;
+	float *retorno;		//valor de retorno das threads
+	
+	//recebe os parametros de entrada (dimensao do vetor, numero de threads)
+	printf("Digite o numero de elementos do vetor: ");
+	scanf("%ld", &dim);
+	printf("Digite o numero de threads (concorrente): ");
+	scanf("%d", &nthreads);
+	printf("---------------------------------------------\n");
+	
+	vetor = (float*) malloc(sizeof(float)*dim);
+	if(vetor==NULL){
+		printf("Erro 1 - malloc\n");
+		return 1;
+	}
+	
+	//preenche o vetor de entrada
+	for(long int i=0; i<dim; i++){
+		vetor[i] = 1000.1/(i+1);
+	}
+
+	GET_TIME(inicio);
+	//verifica o maior elemento (sequencial)
+	for(long int i=0; i<dim; i++){
+		if(vetor[i] > MaiorSeq) MaiorSeq = vetor[i];
+	}
+	GET_TIME(fim);
+	t_seq = fim - inicio;
+	printf("Tempo Sequencial: %lf\n", t_seq);
+	
+	//verifica o maior elemento (concorrente)
+	GET_TIME(inicio);
+	tid = (pthread_t *) malloc(sizeof(pthread_t)*nthreads);
+	if(tid==NULL){
+		printf("Erro 2 - malloc\n");
+		return 2;
+	}
+	
+	//criar as threads
+	for(long int i=0; i<nthreads; i++){
+		if(pthread_create(tid+i, NULL, tarefa, (void *) i)){
+			printf("Erro 3 - pthread_create\n");
+			return 3;
+		}
+	}
+	
+	//aguardar o termino das threads
+	for(long int i=0; i<nthreads; i++) {
+      if(pthread_join(*(tid+i), (void**) &retorno)){
+         printf("Erro 4 - pthread_join\n");
+         return 4;
+      }
+      //maior vetor global
+      if(*retorno > MaiorConc) MaiorConc = *retorno;
+      free(retorno);
+   }
+	
+	GET_TIME(fim);
+	t_conc = fim - inicio;
+	printf("Tempo Concorrente: %lf\n", t_conc);
+	
+	//exibir os resultados
+	printf("---------------------------------------------\n");
+	printf("Maior Elemento (Sequencial): %f\n", MaiorSeq);
+	printf("Maior Elemento (Concorrente): %f\n", MaiorConc);
+	printf("---------------------------------------------\n");
+	printf("Aceleracao: %f\n", t_seq/t_conc);
+	printf("---------------------------------------------\n");
+	
+	//liberar memoria alocada
+	free(vetor);
+	free(tid);
+		
+	return 0;
+}
