@@ -13,14 +13,14 @@ pthread_cond_t cond_5, cond_1;
 void *thread_5 (void *threadid) {
 	int *tid = (int*) threadid;
   
-	printf("Thread %d - Comecou\n", *tid);
+	//printf("Thread %d - Comecou\n", *tid);
 
 	printf("Seja bem-vindo!\n");
 
 	pthread_mutex_lock(&mutex);
 	x++;
 	if (x==1) {
-		printf("T5: x=%d, vai sinalizar a cond_5\n", x);
+		//printf("T5: x=%d, vai sinalizar a cond_5\n", x);
 		pthread_cond_broadcast(&cond_5);		//libera as threads 2, 3 e 4
 	}
 	pthread_mutex_unlock(&mutex);
@@ -32,20 +32,20 @@ void *thread_5 (void *threadid) {
 void *thread_4 (void *threadid) {
 	int *tid = (int*) threadid;
   
-	printf("Thread %d - Comecou\n", *tid);
+	//printf("Thread %d - Comecou\n", *tid);
 	
 	pthread_mutex_lock(&mutex);
 	if (x<1) { 
-	    printf("T4: x=%d - Bloqueado\n", x);
+	    //printf("T4: x=%d - Bloqueado\n", x);
 	    pthread_cond_wait(&cond_5, &mutex);
-	    printf("T4: sinal recebido - mutex realocado - x=%d\n", x);
+	    //printf("T4: sinal recebido - mutex realocado - x=%d\n", x);
 	}
 	
 	printf("Aceita um copo dagua?\n");
 	
 	x++;
 	if (x==4) {
-		printf("T4: x=%d, vai sinalizar a cond_1\n", x);	//caso as threads 2, 3 e 4 executem
+		//printf("T4: x=%d, vai sinalizar a cond_1\n", x);	//caso as threads 2, 3 e 4 executem
 		pthread_cond_signal(&cond_1);						//libera a thread 1
 	}
 	
@@ -57,21 +57,20 @@ void *thread_4 (void *threadid) {
 void *thread_3 (void *threadid) {
 	int *tid = (int*) threadid;
   
-	printf("Thread %d - Comecou\n", *tid);
-	//printf("Thread 3 - Comecou\n");
+	//printf("Thread %d - Comecou\n", *tid);
 	
 	pthread_mutex_lock(&mutex);
 	if (x<1) { 
-	    printf("T3: x=%d - Bloqueado\n", x);
+	    //printf("T3: x=%d - Bloqueado\n", x);
 	    pthread_cond_wait(&cond_5, &mutex);
-	    printf("T3: sinal recebido - mutex realocado - x=%d\n", x);
+	    //printf("T3: sinal recebido - mutex realocado - x=%d\n", x);
 	}
 	
 	printf("Sente-se por favor.\n");
 	
 	x++;
 	if (x==4) {
-		printf("T3: x=%d, vai sinalizar a cond_1\n", x);	//caso as threads 2, 3 e 4 executem
+		//printf("T3: x=%d, vai sinalizar a cond_1\n", x);	//caso as threads 2, 3 e 4 executem
 		pthread_cond_signal(&cond_1);						//libera a thread 1
 	}
 	
@@ -83,21 +82,20 @@ void *thread_3 (void *threadid) {
 void *thread_2 (void *threadid) {
 	int *tid = (int*) threadid;
 
-	printf("Thread %d - Comecou\n", *tid);
-	//printf("Thread 2 - Comecou\n");
+	//printf("Thread %d - Comecou\n", *tid);
 	
 	pthread_mutex_lock(&mutex);
 	if (x<1) { 
-	    printf("T2: x=%d - Bloqueado\n", x);
+	    //printf("T2: x=%d - Bloqueado\n", x);
 	    pthread_cond_wait(&cond_5, &mutex);
-	    printf("T2: sinal recebido - mutex realocado - x=%d\n", x);
+	    //printf("T2: sinal recebido - mutex realocado - x=%d\n", x);
 	}
 	
 	printf("Fique a vontade.\n");
 	
 	x++;
 	if (x==4) {
-		printf("T2: x=%d, vai sinalizar a cond_1\n", x);	//caso as threads 2, 3 e 4 executem
+		//printf("T2: x=%d, vai sinalizar a cond_1\n", x);	//caso as threads 2, 3 e 4 executem
 		pthread_cond_signal(&cond_1);						//libera a thread 1
 	}
 	
@@ -109,14 +107,13 @@ void *thread_2 (void *threadid) {
 void *thread_1 (void *threadid) {
 	int *tid = (int*) threadid;
 
-	printf("Thread %d - Comecou\n", *tid);
-	//printf("Thread 1 - Comecou\n");
+	//printf("Thread %d - Comecou\n", *tid);
 	
 	pthread_mutex_lock(&mutex);
 	if (x<4) { 
-	    printf("T1: x=%d - Bloqueado\n", x);
+	    //printf("T1: x=%d - Bloqueado\n", x);
 	    pthread_cond_wait(&cond_1, &mutex);
-	    printf("T1: sinal recebido - mutex realocado - x=%d\n", x);
+	    //printf("T1: sinal recebido - mutex realocado - x=%d\n", x);
 	}
 	
 	printf("Volte sempre!\n");
@@ -153,7 +150,7 @@ int main(int argc, char *argv[]) {
 	for (int i = 0; i<NTHREADS; i++){
 		pthread_join(threads[i], NULL);
 	}
-	printf ("Fim\n");
+	//printf ("Fim\n");
 	
 	/* Desaloca variaveis e termina */
 	pthread_mutex_destroy(&mutex);
