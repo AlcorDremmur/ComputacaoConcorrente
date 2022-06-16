@@ -1,0 +1,416 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include <math.h>
+#include "timer.h"
+
+#include <iostream>
+#include <cmath>
+#include <string>
+#include <sstream>
+#include <iomanip> 
+#include <memory>
+#include <vector>
+
+using namespace std;
+
+/*----------------------------------------------------*/
+
+//Tipo Variavel
+class Var {
+	private:
+		
+	public:
+
+		double e(double v) {
+			return v;
+		}
+		
+		string str() const {
+			return "x";
+		}
+};
+
+//Tipo Constante
+class Const {
+	private:
+		double c;
+		
+	public:
+		//construtor
+		Const(int C): c(C) {};
+		Const(double C): c(C) {};
+		
+		double e(double v) {
+			return c;
+		}
+		
+		string str() const {
+			double n;
+            if( modf(c, &n) == 0 ){
+                return to_string((int) n);
+            }
+            else{
+                ostringstream s;
+                s << c << setprecision(2);
+                return s.str();
+            }
+		}
+};
+
+/*----------------------------------------------------*/
+
+//Soma entre valores
+template <typename F1, typename F2>
+class Soma{
+	private:
+		F1 f1;
+		F2 f2;
+		
+	public:
+		Soma(F1 a, F2 b): f1(a), f2(b) {}
+		
+		//f1(x) + f2(x)
+		double e(double v) {
+			return (f1.e(v) + f2.e(v));
+		}
+		
+		string str() const {
+			string x;
+			x = "(" + f1.str() + "+" + f2.str() + ")";
+			return x;
+		}
+		
+};
+
+//F1 + F2
+template <typename F1, typename F2>
+Soma<F1,F2> operator + (F1 f1, F2 f2){
+	return Soma<F1,F2>(f1,f2);
+}
+
+//F1 + int
+template <typename F1>
+Soma<F1,Const> operator + (F1 f1, int n){
+	return Soma<F1,Const>(f1,n);
+}
+
+//int + F2
+template <typename F2>
+Soma<Const,F2> operator + (int n, F2 f2){
+	return Soma<Const,F2>(n,f2);
+}
+
+//F1 + double
+template <typename F1>
+Soma<F1,Const> operator + (F1 f1, double n){
+	return Soma<F1,Const>(f1,n);
+}
+
+//double + F2
+template <typename F2>
+Soma<Const,F2> operator + (double n, F2 f2){
+	return Soma<Const,F2>(n,f2);
+}
+
+/*----------------------------------------------------*/
+
+//Subtracao entre valores
+template <typename F1, typename F2>
+class Subtracao{
+	private:
+		F1 f1;
+		F2 f2;
+		
+	public:
+		Subtracao(F1 a, F2 b): f1(a), f2(b) {}
+		
+		//f1(x) - f2(x)
+		double e(double v) {
+			return (f1.e(v) - f2.e(v));
+		}
+		
+		string str() const {
+			string x;
+			x = "(" + f1.str() + "-" + f2.str() + ")";
+			return x;
+		}
+};
+
+//F1 - F2
+template <typename F1, typename F2>
+Subtracao<F1,F2> operator - (F1 f1, F2 f2){
+	return Subtracao<F1,F2>(f1,f2);
+}
+
+//F1 + int
+template <typename F1>
+Subtracao<F1,Const> operator - (F1 f1, int n){
+	return Subtracao<F1,Const>(f1,n);
+}
+
+//int + F2
+template <typename F2>
+Subtracao<Const,F2> operator - (int n, F2 f2){
+	return Subtracao<Const,F2>(n,f2);
+}
+
+//F1 + double
+template <typename F1>
+Subtracao<F1,Const> operator - (F1 f1, double n){
+	return Subtracao<F1,Const>(f1,n);
+}
+
+//double + F2
+template <typename F2>
+Subtracao<Const,F2> operator - (double n, F2 f2){
+	return Subtracao<Const,F2>(n,f2);
+}
+
+/*----------------------------------------------------*/
+
+//Multiplicacao entre valores
+template <typename F1, typename F2>
+class Multiplicacao{
+	private:
+		F1 f1;
+		F2 f2;
+		
+	public:
+		Multiplicacao(F1 a, F2 b): f1(a), f2(b) {}
+		
+		//f1(x) * f2(x)
+		double e(double v) {
+			return (f1.e(v) * f2.e(v));
+		}
+		
+		string str() const {
+			string x;
+			x = "(" + f1.str() + "*" + f2.str() + ")";
+			return x;
+		}
+
+};
+
+//F1 * F2
+template <typename F1, typename F2>
+Multiplicacao<F1,F2> operator * (F1 f1, F2 f2){
+	return Multiplicacao<F1,F2>(f1,f2);
+}
+
+//F1 * int
+template <typename F1>
+Multiplicacao<F1,Const> operator * (F1 f1, int n){
+	return Multiplicacao<F1,Const>(f1,n);
+}
+
+//int * F2
+template <typename F2>
+Multiplicacao<Const,F2> operator * (int n, F2 f2){
+	return Multiplicacao<Const,F2>(n,f2);
+}
+
+//F1 * double
+template <typename F1>
+Multiplicacao<F1,Const> operator * (F1 f1, double n){
+	return Multiplicacao<F1,Const>(f1,n);
+}
+
+//double * F2
+template <typename F2>
+Multiplicacao<Const,F2> operator * (double n, F2 f2){
+	return Multiplicacao<Const,F2>(n,f2);
+}
+
+/*----------------------------------------------------*/
+
+//Divisao entre valores
+template <typename F1, typename F2>
+class Divisao{
+	private:
+		F1 f1;
+		F2 f2;
+		
+	public:
+		Divisao(F1 a, F2 b): f1(a), f2(b) {}
+		
+		//f1(x) / f2(x)
+		double e(double v) {
+			return (f1.e(v) / f2.e(v));
+		}
+		
+		string str() const {
+			string x;
+			x = "(" + f1.str() + "/" + f2.str() + ")";
+			return x;
+		}
+
+};
+
+//F1 / F2
+template <typename F1, typename F2>
+Divisao<F1,F2> operator / (F1 f1, F2 f2){
+	return Divisao<F1,F2>(f1,f2);
+}
+
+//F1 / int
+template <typename F1>
+Divisao<F1,Const> operator / (F1 f1, int n){
+	return Divisao<F1,Const>(f1,n);
+}
+
+//int / F2
+template <typename F2>
+Divisao<Const,F2> operator / (int n, F2 f2){
+	return Divisao<Const,F2>(n,f2);
+}
+
+//F1 / double
+template <typename F1>
+Divisao<F1,Const> operator / (F1 f1, double n){
+	return Divisao<F1,Const>(f1,n);
+}
+
+//double / F2
+template <typename F2>
+Divisao<Const,F2> operator / (double n, F2 f2){
+	return Divisao<Const,F2>(n,f2);
+}
+
+/*----------------------------------------------------*/
+
+//Variavel x
+Var x;
+//Funcao f
+auto f = (3*x*x) + (2*x);
+//auto f = (5*x*x*x) + (3);
+//auto f = (3*x*x) + (5);
+
+//Variaveis Compartilhadas
+double a, b;				//[a,b] - intervalo
+double h;					//h = (b-a)/n - altura de cada trapezio
+double a_aprx;				//Valor aproximado da integral
+int n, nthreads;			//Numero de threads
+
+//pthread_mutex_t mutex;
+
+/*----------------------------------------------------*/
+
+
+void * tarefa(void * arg){
+	int id = *((int*) (&arg));			//identificador da thread
+	
+	//pthread_mutex_lock(&mutex);
+	
+	long int TamBloco = n/nthreads;		//tamanho do bloco atribuido a cada thread
+ 	long int ini = id * TamBloco;		//id do elemento inicial de cada bloco da thread
+ 	long int fim;
+	double x_i;
+	
+	if(id == nthreads-1) fim = n;
+	else fim = ini + TamBloco;			//trata o resto, se hover
+	
+	for(int i=ini; i<fim; i++){
+		if(i==0) continue;
+		x_i = a + (i * h);
+ 		a_aprx += f.e(x_i);
+	}
+	
+	//pthread_mutex_unlock(&mutex);
+	
+	pthread_exit(NULL);
+}
+
+/*----------------------------------------------------*/
+
+int main(void){
+	
+	pthread_t *tid;						//threads a serem criadas
+	//pthread_mutex_init(&mutex, NULL);
+	
+	double ini, fim; 					//tomada de tempo
+	double temp_seq, temp_conc;			//tempo sequencial e concorrente
+	
+	/*Entrada de dados*/
+	
+	cout << "f(x) = " << f.str() << "\n" << endl;	//imprime a funcao f
+	
+	cout << "Intervalo [a,b]: ";
+	cin >> a >> b;									//intervalo [a,b]
+	cout << "Numero de sub-intervalos: ";
+	cin >> n;										//n - numero de subintervalos de [a,b]
+	cout << "Numero de threads: ";
+	cin >> nthreads;								//numero de threads
+	while(nthreads > n){
+		cout << "O numero de threads nao pode ser maior que o numero de subintervalos: " << endl;
+		cout << "Numero de threads: ";
+		cin >> nthreads;
+	}
+	
+	h = (b-a)/n;									//largura de cada subintervalo - altura do trapezio
+	
+	/*Programa Sequencial*/
+	
+	/*GET_TIME(ini);
+	
+	a_aprx = (f.e(a) + f.e(b))/2.0;
+	
+	double x_i;
+	for(int i=0; i<n; i++){
+		x_i = a + (i * h);
+ 		a_aprx += f.e(x_i);
+	}
+	a_aprx = h * a_aprx;
+	
+	cout << "\nIntegral (Sequencial): " << a_aprx << endl;
+	
+	GET_TIME(fim);
+	
+	temp_seq = fim-ini;
+	cout << "Tempo Sequencial: " << temp_seq << endl;
+	*/
+	
+	/*Programa Concorrente*/
+
+	GET_TIME(ini);
+	
+	a_aprx = (f.e(a) + f.e(b))/2.0;
+	
+	//aloca as threads na memoria
+	tid = (pthread_t*) malloc(sizeof(pthread_t)*nthreads);
+	
+	//Cria as threads
+	for(int i=0; i<nthreads; i++){
+		int arg;
+		if(pthread_create(tid+i, NULL, tarefa, (void *) i)){
+			cout << "ERROR - Thread Creation" << endl;
+			exit(-1);
+		}
+	}
+	
+	//Espera as threads terminarem
+	for(int i=0; i<nthreads; i++){
+		if(pthread_join(tid[i], NULL)){
+			cout << "ERROR - Thread Ending" << endl;
+			exit(-1);
+		}
+	}
+
+	a_aprx = h * a_aprx;
+	cout << "\nIntegral (Concorrente): " << a_aprx << endl;
+	
+	GET_TIME(fim);
+	
+	temp_conc = fim-ini;
+	//cout << "Tempo Concorrente: " << temp_conc << endl;
+	
+	//cout << "\nAceleracao: " << temp_seq/temp_conc << endl;
+	
+	
+	/*Libera a Memoria*/
+	
+	pthread_exit(NULL);
+	free(tid);
+	
+	return 0;
+}
